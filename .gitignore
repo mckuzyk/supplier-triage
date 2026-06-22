@@ -1,0 +1,24 @@
+# ── Python / uv (agent/) ──────────────────────────────
+# uv didn't write an agent/.gitignore because it detected the root repo,
+# so these live here and cover the whole tree.
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── Secrets / local env ───────────────────────────────
+# The agent needs an ANTHROPIC_API_KEY; keep it out of git.
+.env
+.env.*
+!.env.example
+
+# ── OS cruft (you're on macOS) ────────────────────────
+.DS_Store
+
+# ── Editor ────────────────────────────────────────────
+.idea/
+*.swp
+# .vscode/   # uncomment to ignore; some teams commit shared VS Code settings

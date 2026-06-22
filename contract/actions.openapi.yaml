@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: Supplier Triage Action API
+  version: 0.1.0
+  description: >
+    Single source of truth for the agent-controlled supplier-risk triage demo.
+    The Phoenix server validates incoming requests against this spec; the Python
+    agent generates one focused tool per action `kind` from the same definitions.
+    Mutations go through one endpoint (POST .../actions) with a discriminated body;
+    reads are plain GETs. There is deliberately no delete / raw-query action — the
+    action set IS the safety boundary.
+
+servers:
+  - url: http://localhost:4000
+    description: Local Phoenix server
+
+paths:
+  /api/sessions:
+    post:
+      operationId: createSession
+      summary: Create a fresh triage session (seeded state) and return its id + watch URL.
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, watchUrl]
+                properties:
+                  id: { type: string, example: "sess_a1b2c3" }
+                  watchUrl:
+                    type: string
+                    description: LiveView URL a human can open to watch the agent work.
+                    example: "http://localhost:4000/board/sess_a1b2c3"
+
+  /api/sessions/{id}/state:
+    get:
+      operationId: getState
+      summary: Full current state snapshot for the session.
+      parameters: [ { $ref: "#/components/parameters/SessionId" } ]
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/State" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/sessions/{id}/suppliers:
+    get:
+      operationId: querySuppliers
+      summary: The filtered/sorted supplier view (a read tool for the agent).
+      parameters:
+        - { $ref: "#/components/parameters/SessionId" }
+        - { name: program, in: query, required: false, schema: { $ref: "#/components/schemas/Program" } }
+        - { name: ownerCountry, in: query, required: false, schema: { type: string } }
+        - { name: minForeignPct, in: query, required: false, schema: { type: number, minimum: 0, maximum: 100 } }
+        - { name: singleSourceOnly, in: query, required: false, schema: { type: boolean } }
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/Status" } }
+        - { name: sortField, in: query, required: false, schema: { $ref: "#/components/schemas/SortField" } }
+        - { name: sortDir, in: query, required: false, schema: { $ref: "#/components/schemas/SortDir" } }
+      responses:
+        "200":
+          description: Matching suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Supplier" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/sessions/{id}/actions:
+    post:
+      operationId: applyAction
+      summary: Apply one action through the deterministic reducer.
+      description: >
+        The server validates the body against this spec (422 on schema failure),
+        injects a server-side timestamp, runs reduce(state, action), persists the
+        new state, broadcasts it to the LiveView over PubSub, and returns the
+        outcome. Domain failures (e.g. unknown supplier id) return 200 with
+        status="error" and leave state unchanged.
+      parameters: [ { $ref: "#/components/parameters/SessionId" } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Action" }
+      responses:
+        "200":
+          description: Action processed (see status for ok vs domain error)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Outcome" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/ValidationError" }
+
+components:
+  parameters:
+    SessionId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    NotFound:
+      description: Session not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Outcome" }
+    ValidationError:
+      description: Request body failed contract validation
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Outcome" }
+
+  schemas:
+    Program:
+      type: string
+      enum: [F-35, Columbia-class, GMLRS, B-21]
+    Status:
+      type: string
+      enum: [unreviewed, flagged, cleared, escalated]
+    Decision:
+      type: string
+      enum: [flag, clear, escalate]
+    SortField:
+      type: string
+      enum: [name, program, tier, ownerCountry, foreignOwnershipPct, singleSource, leadTimeDays, riskScore, status]
+    SortDir:
+      type: string
+      enum: [asc, desc]
+
+    Supplier:
+      type: object
+      required: [id, name, program, tier, ownerCountry, foreignOwnershipPct, singleSource, leadTimeDays, riskScore, status]
+      properties:
+        id: { type: string, example: "S-001" }
+        name: { type: string }
+        program: { $ref: "#/components/schemas/Program" }
+        tier: { type: integer, enum: [1, 2, 3] }
+        ownerCountry: { type: string, description: "ISO-ish country code; 'US' denotes a US owner." }
+        foreignOwnershipPct: { type: number, minimum: 0, maximum: 100 }
+        singleSource: { type: boolean }
+        leadTimeDays: { type: integer, minimum: 0 }
+        riskScore: { type: number, minimum: 0, maximum: 100 }
+        status: { $ref: "#/components/schemas/Status" }
+
+    Review:
+      type: object
+      required: [decision, rationale, ts]
+      properties:
+        decision: { $ref: "#/components/schemas/Decision" }
+        rationale: { type: string }
+        ts: { type: string, format: date-time, description: "Server-injected timestamp." }
+
+    State:
+      type: object
+      required: [suppliers, filters, sort, selectedId, reviews, log]
+      properties:
+        suppliers:
+          type: array
+          items: { $ref: "#/components/schemas/Supplier" }
+        filters:
+          type: object
+          description: Active filters; absent keys mean unfiltered.
+          properties:
+            program: { $ref: "#/components/schemas/Program" }
+            ownerCountry: { type: string }
+            minForeignPct: { type: number }
+            singleSourceOnly: { type: boolean }
+            status: { $ref: "#/components/schemas/Status" }
+        sort:
+          nullable: true
+          type: object
+          properties:
+            field: { $ref: "#/components/schemas/SortField" }
+            dir: { $ref: "#/components/schemas/SortDir" }
+        selectedId:
+          type: string
+          nullable: true
+        reviews:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/Review" }
+          description: Map of supplier id to its review.
+        log:
+          type: array
+          description: Append-only action log (the trace).
+          items:
+            type: object
+            properties:
+              kind: { type: string }
+              args: { type: object }
+              outcome: { $ref: "#/components/schemas/Outcome" }
+              ts: { type: string, format: date-time }
+
+    Outcome:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: string, enum: [ok, error] }
+        message: { type: string }
+
+    # ---- Actions: one variant per kind, discriminated on `kind` ----
+    Action:
+      oneOf:
+        - { $ref: "#/components/schemas/ApplyFilter" }
+        - { $ref: "#/components/schemas/ClearFilters" }
+        - { $ref: "#/components/schemas/SortBy" }
+        - { $ref: "#/components/schemas/SelectSupplier" }
+        - { $ref: "#/components/schemas/AddNote" }
+        - { $ref: "#/components/schemas/SubmitReview" }
+      discriminator:
+        propertyName: kind
+        mapping:
+          apply_filter: "#/components/schemas/ApplyFilter"
+          clear_filters: "#/components/schemas/ClearFilters"
+          sort_by: "#/components/schemas/SortBy"
+          select_supplier: "#/components/schemas/SelectSupplier"
+          add_note: "#/components/schemas/AddNote"
+          submit_review: "#/components/schemas/SubmitReview"
+
+    ApplyFilter:
+      type: object
+      required: [kind, field, value]
+      properties:
+        kind: { type: string, enum: [apply_filter] }
+        field:
+          type: string
+          enum: [program, ownerCountry, minForeignPct, singleSourceOnly, status]
+        value:
+          description: >
+            Type depends on field — string for program/ownerCountry/status,
+            number for minForeignPct, boolean for singleSourceOnly.
+          oneOf:
+            - { type: string }
+            - { type: number }
+            - { type: boolean }
+
+    ClearFilters:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [clear_filters] }
+
+    SortBy:
+      type: object
+      required: [kind, field, dir]
+      properties:
+        kind: { type: string, enum: [sort_by] }
+        field: { $ref: "#/components/schemas/SortField" }
+        dir: { $ref: "#/components/schemas/SortDir" }
+
+    SelectSupplier:
+      type: object
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [select_supplier] }
+        id: { type: string }
+
+    AddNote:
+      type: object
+      required: [kind, id, text]
+      properties:
+        kind: { type: string, enum: [add_note] }
+        id: { type: string }
+        text: { type: string }
+
+    SubmitReview:
+      type: object
+      required: [kind, id, decision, rationale]
+      description: Terminal decision for one supplier. Server injects the timestamp.
+      properties:
+        kind: { type: string, enum: [submit_review] }
+        id: { type: string }
+        decision: { $ref: "#/components/schemas/Decision" }
+        rationale: { type: string, minLength: 1 }
