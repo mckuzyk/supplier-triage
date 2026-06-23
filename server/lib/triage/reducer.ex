@@ -24,7 +24,7 @@ defmodule Triage.Reducer do
   one-line change in `reduce/2`.
   """
 
-  alias Triage.{State, Supplier}
+  alias Triage.{State, Supplier, SupplierQuery}
 
   @type outcome :: {:ok, String.t()} | {:error, String.t()}
 
@@ -66,7 +66,7 @@ defmodule Triage.Reducer do
     # :single_source sorts false-before-true and :status sorts alphabetically
     # (cleared, escalated, flagged, unreviewed), NOT by severity. Drop in a custom
     # comparator if you want a domain order on those.
-    sorted = Enum.sort_by(state.suppliers, &Map.fetch!(&1, field), dir)
+    sorted = SupplierQuery.sort(state.suppliers, %{field: field, dir: dir})
 
     {%{state | suppliers: sorted, sort: %{field: field, dir: dir}},
      {:ok, "Sorted by #{field} #{dir}"}}

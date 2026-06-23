@@ -20,10 +20,13 @@ defmodule TriageWeb.Router do
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", TriageWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", TriageWeb do
+    pipe_through :api
+    post "/sessions", SessionController, :create
+    post "/sessions/:id/actions", SessionController, :apply_action
+    get "/sessions/:id/state", SessionController, :state
+    get "/sessions/:id/suppliers", SessionController, :suppliers
+  end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:triage, :dev_routes) do
