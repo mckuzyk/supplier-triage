@@ -8,7 +8,8 @@
 import Config
 
 config :triage,
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  contract_path: Path.expand("../../contract/suppliers.seed.json", __DIR__)
 
 # Configure the endpoint
 config :triage, TriageWeb.Endpoint,

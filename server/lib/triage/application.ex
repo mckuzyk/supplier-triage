@@ -14,6 +14,8 @@ defmodule Triage.Application do
       # Start a worker by calling: Triage.Worker.start_link(arg)
       # {Triage.Worker, arg},
       # Start to serve requests, typically the last entry
+      {Registry, keys: :unique, name: Triage.SessionRegistry},
+      {DynamicSupervisor, name: Triage.SessionSupervisor, strategy: :one_for_one},
       TriageWeb.Endpoint
     ]
 
