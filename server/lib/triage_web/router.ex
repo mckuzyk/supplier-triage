@@ -16,6 +16,7 @@ defmodule TriageWeb.Router do
 
   scope "/", TriageWeb do
     pipe_through :browser
+    live "/board/:id", BoardLive
 
     get "/", PageController, :home
   end
