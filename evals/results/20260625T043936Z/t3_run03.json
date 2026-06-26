@@ -1,0 +1,56 @@
+{
+  "task": "t3",
+  "run": 3,
+  "goal": "Escalate the worst lead-time exposure on Columbia-class with a rationale.",
+  "session_id": "sess_b91778cf444c",
+  "watch_url": "http://localhost:4000/board/sess_b91778cf444c",
+  "passed": true,
+  "error": null,
+  "check": {
+    "passed": true,
+    "expected": {
+      "S-015": "escalated"
+    },
+    "actual": {
+      "S-015": "escalated"
+    },
+    "missing": {},
+    "extra": {},
+    "wrong": {},
+    "integrity_problems": [],
+    "rationale_ok": true,
+    "rationale_text": "Allegheny Avionics Group represents the worst lead-time exposure across all Columbia-class suppliers at 395 days \u2014 over 13 months. Compounding the schedule risk: it is a Tier 1 single-source supplier with no identified alternate, meaning any disruption directly impacts the critical path with no fallback. Foreign ownership stands at 38% (Germany), elevating supply-chain security concern. Risk score of 77 confirms this is a high-severity case requiring senior review and contingency planning (e.g., safety-stock build, qualification of an alternate source, or contractual delivery guarantees).",
+    "reasons": []
+  },
+  "server": {
+    "log_entries": 1,
+    "reviews_ok": 1,
+    "invalid_actions": 0,
+    "by_kind": {
+      "submit_review": 1
+    }
+  },
+  "agent": {
+    "tool_calls_total": 3,
+    "triage_tool_calls": 2,
+    "action_calls": 1,
+    "read_calls": 1,
+    "other_calls": 1,
+    "names": [
+      "ToolSearch",
+      "mcp__triage__query_suppliers",
+      "mcp__triage__submit_review"
+    ]
+  },
+  "run_meta": {
+    "num_turns": 4,
+    "duration_ms": 19397,
+    "total_cost_usd": 0.046427800000000005,
+    "is_error": false
+  },
+  "final_text": "I'll start by loading the triage tools and then investigate the Columbia-class suppliers.Now let me query Columbia-class suppliers sorted by lead time (descending) to find the worst exposure.The worst lead-time exposure is clear: **S-015 Allegheny Avionics Group** at **395 days** \u2014 a Tier 1, single-source supplier with 38% German ownership and a risk score of 77. I'll escalate it now.**Done.** Here's a summary of what I did and why:\n\n| Field | Value |\n|---|---|\n| Supplier | Allegheny Avionics Group (S-015) |\n| Decision | **Escalate** |\n| Lead Time | **395 days** \u2014 longest on Columbia-class by 71 days |\n| Tier / Single-Source | Tier 1 / Yes \u2014 no alternate supplier |\n| Foreign Ownership | 38% (Germany) |\n| Risk Score | 77 |\n\nThe combination of a **395-day lead time**, **single-source Tier 1 criticality**, and **38% foreign ownership** makes S-015 the clear worst exposure on the program. An escalation is warranted so decision-makers can assess safety-stock options, accelerate alternate-source qualification, or negotiate contractual delivery protections.",
+  "judge": {
+    "score": 5,
+    "reason": "Every claim maps precisely to the ground-truth fields (395-day lead time, Columbia-class, Tier 1, singleSource, 38% German ownership, riskScore 77), the reasoning is specific and causally linked, and no facts are invented."
+  }
+}

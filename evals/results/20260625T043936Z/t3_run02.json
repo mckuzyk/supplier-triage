@@ -1,0 +1,56 @@
+{
+  "task": "t3",
+  "run": 2,
+  "goal": "Escalate the worst lead-time exposure on Columbia-class with a rationale.",
+  "session_id": "sess_2de6f4396744",
+  "watch_url": "http://localhost:4000/board/sess_2de6f4396744",
+  "passed": true,
+  "error": null,
+  "check": {
+    "passed": true,
+    "expected": {
+      "S-015": "escalated"
+    },
+    "actual": {
+      "S-015": "escalated"
+    },
+    "missing": {},
+    "extra": {},
+    "wrong": {},
+    "integrity_problems": [],
+    "rationale_ok": true,
+    "rationale_text": "Allegheny Avionics Group is the worst lead-time exposure on the Columbia-class program at 395 days \u2014 71 days longer than the next-highest supplier and far above any operationally acceptable buffer. The risk is compounded by three additional factors: (1) Tier-1 position means a delay propagates directly to the prime integrator with no buffering tier; (2) it is a single-source supplier, so there is no alternate to absorb or share demand if production lags; and (3) 38% German ownership (DE) introduces a foreign-ownership dimension that may trigger FOCI concerns and could impede surge production approvals. Risk score of 77 corroborates the elevated exposure. Escalation is warranted to engage program management and contracting for immediate lead-time mitigation and alternate-source qualification.",
+    "reasons": []
+  },
+  "server": {
+    "log_entries": 1,
+    "reviews_ok": 1,
+    "invalid_actions": 0,
+    "by_kind": {
+      "submit_review": 1
+    }
+  },
+  "agent": {
+    "tool_calls_total": 3,
+    "triage_tool_calls": 2,
+    "action_calls": 1,
+    "read_calls": 1,
+    "other_calls": 1,
+    "names": [
+      "ToolSearch",
+      "mcp__triage__query_suppliers",
+      "mcp__triage__submit_review"
+    ]
+  },
+  "run_meta": {
+    "num_turns": 4,
+    "duration_ms": 20663,
+    "total_cost_usd": 0.04716985,
+    "is_error": false
+  },
+  "final_text": "I'll start by loading the triage tool schemas, then investigate the Columbia-class suppliers for lead-time exposure.Now let me query Columbia-class suppliers sorted by lead time (worst first) to identify the top exposure.Clear winner: **S-015 Allegheny Avionics Group** sits at the top with a 395-day lead time \u2014 71 days beyond the next worst supplier. It also compounds that delay risk with Tier-1 status, single-source dependency, and 38% German ownership. I'll escalate it now.**Done.** Here's a summary of what I did:\n\n| Field | Value |\n|---|---|\n| Supplier | Allegheny Avionics Group (S-015) |\n| Decision | **Escalated** |\n| Lead Time | **395 days** \u2014 longest on Columbia-class by 71 days |\n| Tier | 1 (directly impacts prime integrator) |\n| Single Source | Yes \u2014 no alternate supplier |\n| Foreign Ownership | 38% (Germany) \u2014 potential FOCI concern |\n| Risk Score | 77 |\n\n**Rationale in brief:** The 395-day lead time alone makes this the standout exposure. The combination of Tier-1 criticality, zero alternate sources, and significant German ownership turns a scheduling risk into a program-level threat warranting immediate management attention for lead-time mitigation and alternate-source qualification.",
+  "judge": {
+    "score": 4,
+    "reason": "The rationale is well-grounded in the supplier's actual data (395-day lead time, Tier-1, single-source, 38% DE ownership, risk score 77, Columbia-class program) and is specific rather than boilerplate, but the claim that 395 days is '71 days longer than the next-highest supplier' is an invented comparative fact not present in the provided data."
+  }
+}
