@@ -436,7 +436,9 @@ defmodule TriageWeb.BoardLive do
                 <li :for={entry <- Enum.reverse(@state.log)} class={["border-l-2 pl-2", trace_border(entry)]}>
                   <div class="flex items-baseline justify-between">
                     <span class="font-mono text-xs text-gray-700">{entry.kind}</span>
-                    <span class="text-xs text-gray-400">{entry.ts}</span>
+                  </div>
+                  <div class="flex items-baseline justify-between">
+                    <span class="text-xs text-gray-400">{fmt_ts(entry.ts)}</span>
                   </div>
                   <div class={trace_text(entry)}>{entry.outcome.message}</div>
                 </li>
@@ -525,4 +527,14 @@ defmodule TriageWeb.BoardLive do
   defp ok?(entry), do: to_string(entry.outcome.status) == "ok"
   defp trace_border(entry), do: if(ok?(entry), do: "border-gray-200", else: "border-red-300")
   defp trace_text(entry), do: if(ok?(entry), do: "text-gray-600", else: "text-red-600")
+
+  defp fmt_ts(ts) when is_binary(ts) do
+    case DateTime.from_iso8601(ts) do
+      {:ok, dt, _offset} -> Calendar.strftime(dt, "%Y-%m-%dT%H:%M:%S")
+      _ -> ts
+    end
+  end
+
+  defp fmt_ts(_), do: ""
+
 end
