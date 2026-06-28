@@ -8,6 +8,7 @@ Work done by an agent is reflected in real-time on the web app.
 ## Quick Start
 
 To test and start the server (starting from project root)
+
 ```
 cd server
 mix deps.get
@@ -16,6 +17,7 @@ mix phx.server
 ```
 
 For the agent (again starting from project root)
+
 ```
 # Get dependencies
 uv sync --project agent
@@ -24,11 +26,13 @@ uv sync --project agent
 #   ANTHROPIC_API_KEY=...
 uv run --env-file .env --project agent evals/run_evals.py
 ```
+
 Files should be run as a script (no `-m`) so `agent/src/` is on `sys.path`.
 The contract path resolves repo-relative regardless of cwd.
 
 To test the server and agent tools (no model, no LLM cost), run the following
 with the server running:
+
 ```
 # generate (session_id, watchUrl) for new session
 curl -s -XPOST localhost:4000/api/sessions | jq
@@ -47,8 +51,6 @@ uv run --project agent agent/src/tools.py
 
 ## Design
 
-![Architecture](assets/design_schematic.png)
-
 The API and agent tools are both derived from an OpenAPI spec to ensure they are
 always in sync. Each session maintains a state. Changes to the state are
 deterministic, produced by feeding the current state and an action to
@@ -58,3 +60,7 @@ same state through calls to the API, and a full trace of agent actions are
 traced for observability. By design, the full trace of the agent's work is
 append only, and all information not pertinent to the task, including the Id of
 the session it is working in, is withheld from the agent.
+
+<p align="center">
+    <img src="assets/design_schematic.png" alt="Architecture">
+</p>
